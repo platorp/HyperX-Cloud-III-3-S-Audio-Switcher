@@ -19,12 +19,11 @@ This tool bypasses that by querying the dongle directly over HID (Human Interfac
 ---
 
 ## Requirements
-
+*Or at least tested on the following.*
 - Windows 10 or 11
 - Python 3 — [python.org](https://www.python.org/downloads/)
 - PowerShell 5.1 or later (built into Windows)
 - HyperX Cloud III S Wireless headset + USB-C dongle
-- HyperX NGENUITY **closed** (it may hold the HID interface exclusively)
 
 ---
 
@@ -104,7 +103,7 @@ All configuration is done via parameters in `AudioSwitch.ps1`:
 | Parameter | Default | Description |
 |---|---|---|
 | `HyperXName` | `HyperX Cloud III S Wireless` | Partial name of the HyperX audio device |
-| `FallbackName` | `VG248` | Partial name of the fallback audio device |
+| `FallbackName` | `(f.e. VG248)` | Partial name of the fallback audio device |
 | `CheckInterval` | `3` | Seconds between connection checks |
 
 Partial name matching is used — you don't need the full device name.
@@ -145,7 +144,6 @@ Unregister-ScheduledTask -TaskName "HyperX Audio Switch" -Confirm:$false
 ## Troubleshooting
 
 **Audio doesn't switch:**
-- Make sure HyperX NGENUITY is fully closed (check system tray)
 - Run `python3 hyperx_status.py` manually — it should print `1` when headset is on and `0` when off
 - Check `AudioSwitch.log` for errors
 
@@ -170,20 +168,6 @@ Unregister-ScheduledTask -TaskName "HyperX Audio Switch" -Confirm:$false
 | Other HyperX wireless headsets | ⚠️ Untested — may work if VID/PID matches |
 
 The dongle VID/PID is `03F0:06BE` (HP, Inc). If you have a different HyperX wireless headset, open `hyperx_status.py` and update `VENDOR_ID` and `PRODUCT_ID`. You may also need to re-identify the correct usage page and report bytes using USBPcap.
-
----
-
-## How It Was Built
-
-Standard Windows APIs report the HyperX dongle as permanently "active" regardless of headset state, making automatic switching impossible through normal means.
-
-To find the real connection signal:
-
-1. Captured USB traffic with **USBPcap** and **Wireshark** while **HyperX NGENUITY** communicated with the dongle
-2. Identified `SET_REPORT` control transfers from NGENUITY to the dongle
-3. Found that the dongle has a HID interface on usage page `0x1C0` with report ID `0x0C`
-4. Compared responses with headset on vs off — byte[6] in the response changes from `2` to `0`
-5. Replicated the query in Python using `pywinusb`
 
 ---
 
